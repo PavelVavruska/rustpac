@@ -2,6 +2,9 @@
 
 2D game freely inspired by ZX Spectrum game Jetpac.
 
+29.09.2022 version - Player, enemies, collision, score counting, end-screen
+<img alt="Description" src="https://github.com/PavelVavruska/rustpac/blob/master/rustpac_20220929.png">
+
 
 ## How To Build It ?
 
