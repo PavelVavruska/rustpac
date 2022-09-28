@@ -6,19 +6,10 @@ use crate::player;
 use crate::drawing::draw_rectange;
 use crate::player::WIDTH;
 use crate::enemy;
-use piston_window::TextureContext;
 use piston_window::Transformed;
 use piston_window::color::WHITE;
-use piston_window::glyph_cache::rusttype::GlyphCache;
-use piston_window::Text;
-//use piston_window::gfx_device_gl::{Resources, Factory, CommandBuffer};
 use piston_window::types::Color;
 use rand::Rng;
-
-const WORLD_COLOR: Color = [0.1, 0.9, 0.1, 1.0];
-const PORTAL_COLOR: Color = [0.9, 0.0, 0.0, 1.0];
-const PLAYER_COLOR: Color = [0.9, 0.9, 0.9, 1.0];
-const TRANSFORMED_MINIMAP_X_OFFSET: f64 = 650.0;
 
 pub struct Game {
     // World buffers
@@ -88,7 +79,8 @@ impl Game {
          g: &mut piston_window::G2d, 
          player_sprite: &piston_window::G2dTexture, 
          player_sprite_thrust: &piston_window::G2dTexture, 
-         enemy_sprite: &piston_window::G2dTexture) -> Vec<usize> {
+         enemy_sprite_user_story: &piston_window::G2dTexture,
+         enemy_sprite_bug: &piston_window::G2dTexture) -> Vec<usize> {
 
         let mut result = Vec::<usize>::new();
         // Iterate over the world
@@ -129,15 +121,17 @@ impl Game {
             }
             let mut rng = rand::thread_rng();
             let mut random_x = 0;
+            let mut enemy_type = 1;
             let mut speed_x = rng.gen_range(0.8..1.2);
             if rng.gen_range(0..2) == 0 {
                 random_x = WINDOW_WIDTH;
                 speed_x = -rng.gen_range(0.8..1.2);
+                enemy_type = 2;
             }
 
             // memory leak prevention
             if self.enemies.len() < 1024 {
-                self.enemies.push(enemy::Enemy::new(random_x as f64, 50.0 + rng.gen_range(0.0..600.0), speed_x, 50));
+                self.enemies.push(enemy::Enemy::new(random_x as f64, 50.0 + rng.gen_range(0.0..600.0), speed_x, 50, enemy_type));
             }            
         }
 
@@ -148,7 +142,12 @@ impl Game {
             // draw enemy
             let enemy_trans = con.transform.trans(enemy.x, enemy.y);
 
-            piston_window::image(enemy_sprite, enemy_trans, g);     
+            if enemy.enemy_type == 1 {
+                piston_window::image(enemy_sprite_user_story, enemy_trans, g);    
+            } else {
+                piston_window::image(enemy_sprite_bug, enemy_trans, g);  
+            }
+             
 
             enemy.tick();
             if enemy.time_to_live == 0 {
@@ -206,9 +205,5 @@ impl Game {
         }
         //TODO
         result
-    }
-
-    fn restart_game(self) -> Game {
-        Game::new()
     }
 }

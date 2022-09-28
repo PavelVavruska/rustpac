@@ -9,6 +9,7 @@ pub struct Enemy {
     pub y: f64,
     pub speed_x: f64,
     pub time_to_live: usize,
+    pub enemy_type: usize,
 }
 
 impl Enemy {
@@ -17,22 +18,17 @@ impl Enemy {
         y: f64,
         speed_x: f64,
         time_to_live: usize,
+        enemy_type: usize,
     ) -> Enemy {
         Enemy {
             x,
             y,
             speed_x,
-            time_to_live,            
+            time_to_live,
+            enemy_type,     
         }
     }
     pub fn tick(&mut self) {
-        
-        /*if self.time_to_live == 0 {
-            return
-        } else {
-            self.time_to_live -= 1;
-        }*/
-
         self.x += self.speed_x;
 
         //collision x
