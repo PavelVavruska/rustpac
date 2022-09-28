@@ -9,11 +9,13 @@ mod enemy;
 
 use drawing::to_gui_coord_u32;
 use game::Game;
+use piston_window::glyph_cache::rusttype::GlyphCache;
 use piston_window::types::Color;
 use piston_window::*;
 
 //const BACK_COLOR: Color = [0.204, 0.286, 0.369, 1.0];
 const BACK_COLOR: Color = [0.0, 0.0, 0.0, 1.0];
+const RED_COLOR: Color = [0.5, 0.0, 0.0, 1.0];
 // ZX Spectrum resolution 256×192
 const WINDOW_WIDTH: usize = 256*4;
 const WINDOW_HEIGHT: usize = 192*4;
@@ -43,10 +45,7 @@ fn main() {
     window_settings.set_vsync(true);
 
     // Create a window
-    let mut window: piston_window::PistonWindow = window_settings.build().unwrap();
-
-    // Create a world
-    let mut game = Game::new();
+    let mut window: piston_window::PistonWindow = window_settings.build().unwrap();    
 
     // texture player
     let assets = find_folder::Search::ParentsThenKids(3, 3)
@@ -82,22 +81,99 @@ fn main() {
         ).unwrap();
  
 
+    // load fonts
+    let mut glyphs = window.load_font(assets.join("FiraSans-Regular.ttf")).unwrap();
+    let mut game_score:usize = 0;
+    // how to text https://github.com/PistonDevelopers/piston-examples/blob/master/examples/hello_world.rs
+
+    let mut is_player_dead = false;
+
+    // Create a world
+    let mut game = Game::new();
+
     // Event loop
-    while let Some(event) = window.next() {
-        // Catch the events of the keyboard
-        if let Some(piston_window::Button::Keyboard(key)) = event.press_args() {
-            game.key_pressed(key);
-        }
-        if let Some(piston_window::Button::Keyboard(key)) = event.release_args() {
-            game.key_released(key);
-        }
-        game.player.tick();
+    while let Some(event) = window.next() {        
+
+        if !is_player_dead {
+
+            // Catch the events of the keyboard
+            if let Some(piston_window::Button::Keyboard(key)) = event.press_args() {
+                game.key_pressed(key);
+            }
+            if let Some(piston_window::Button::Keyboard(key)) = event.release_args() {
+                game.key_released(key);
+            }
+            game.player.tick();  // observe keypress all the time
+                   
+            // Draw all of them
+            window.draw_2d(&event, |c, g, device| {
+                piston_window::clear(BACK_COLOR, g);
+                
+                let result = game.compute_one_tick(&c, g, &player_sprite, &player_sprite_thrust, &enemy_sprite/*, &glyphs*/);
+                if *result.get(0).unwrap() == 1 as usize {
+                    is_player_dead = true;
+                }
+                game_score += result.get(1).unwrap();
+                     
+                // draw text            
+                let transform = c.transform.trans(10.0, 50.0);
+    
+                text::Text::new_color([1.0, 1.0, 0.0, 1.0], 32).draw(
+                    format!("US completed: {}", game_score).as_str(),
+                &mut glyphs,
+                &c.draw_state,
+                transform, g
+                ).unwrap();
+    
+                // Update glyphs before rendering.
+                glyphs.factory.encoder.flush(device);
+    
+                });                
+        } else { // player died - show end screen
+
+            window.draw_2d(&event, |c, g, device| {
+                piston_window::clear(RED_COLOR, g);
+                
+                let transform = c.transform.trans(10.0, 150.0);
         
-        // Draw all of them
-        window.draw_2d(&event, |c, g, _| {
-            piston_window::clear(BACK_COLOR, g);
-            
-            game.draw(&c, g, &player_sprite, &player_sprite_thrust, &enemy_sprite);
-        });
-    }
+                text::Text::new_color([1.0, 1.0, 1.0, 1.0], 100).draw(
+                    "Results",
+                &mut glyphs,
+                &c.draw_state,
+                transform, g
+                ).unwrap();
+    
+                let transform = c.transform.trans(10.0, 450.0);
+        
+                text::Text::new_color([1.0, 1.0, 1.0, 1.0], 100).draw(
+                    format!("Your score: {}", game_score).as_str(),
+                &mut glyphs,
+                &c.draw_state,
+                transform, g
+                ).unwrap();
+        
+                let transform = c.transform.trans(10.0, 700.0);
+        
+                text::Text::new_color([1.0, 1.0, 1.0, 1.0], 100).draw(
+                    "Press SPACE to restart.",
+                &mut glyphs,
+                &c.draw_state,
+                transform, g
+                ).unwrap();
+
+                // Update glyphs before rendering.
+                glyphs.factory.encoder.flush(device);        
+                });
+
+            // handle game restart if requested by keypress
+            if let Some(piston_window::Button::Keyboard(key)) = event.press_args() {
+                if key == piston_window::Key::Space {
+                    game = Game::new();
+                    is_player_dead = false;
+                    game_score = 0;
+                }
+            }
+        }
+    }   
+
 }

@@ -6,8 +6,12 @@ use crate::player;
 use crate::drawing::draw_rectange;
 use crate::player::WIDTH;
 use crate::enemy;
+use piston_window::TextureContext;
 use piston_window::Transformed;
 use piston_window::color::WHITE;
+use piston_window::glyph_cache::rusttype::GlyphCache;
+use piston_window::Text;
+//use piston_window::gfx_device_gl::{Resources, Factory, CommandBuffer};
 use piston_window::types::Color;
 use rand::Rng;
 
@@ -22,6 +26,7 @@ pub struct Game {
     pub frame_buffer_next_tick: [[bool; WINDOW_HEIGHT]; WINDOW_WIDTH],
     pub player: player::Player,
     pub enemies: Vec<enemy::Enemy>,
+    pub enemy_spawn_difficulty: usize,
     pub enemy_spawn_ticks: usize,
 }
 
@@ -48,6 +53,7 @@ impl Game {
             ),
             enemies: Vec::new(),
             enemy_spawn_ticks: 150,
+            enemy_spawn_difficulty: 50,
         }
     }
     pub fn key_pressed(&mut self, key: piston_window::Key) {
@@ -78,8 +84,13 @@ impl Game {
     }  
 
     /// Draws entire world.
-    pub fn draw(&mut self, con: &piston_window::Context,
-         g: &mut piston_window::G2d, player_sprite: &piston_window::G2dTexture, player_sprite_thrust: &piston_window::G2dTexture, enemy_sprite: &piston_window::G2dTexture) {
+    pub fn compute_one_tick(&mut self, con: &piston_window::Context,
+         g: &mut piston_window::G2d, 
+         player_sprite: &piston_window::G2dTexture, 
+         player_sprite_thrust: &piston_window::G2dTexture, 
+         enemy_sprite: &piston_window::G2dTexture) -> Vec<usize> {
+
+        let mut result = Vec::<usize>::new();
         // Iterate over the world
 
         // player
@@ -96,7 +107,7 @@ impl Game {
         // projectiles
         let mut dead_projectiles = Vec::<usize>::new();
         for (index, projectile) in self.player.projectiles.iter_mut().enumerate() {            
-            draw_rectange(WHITE, projectile.x, projectile.y, 50, 4, con, g);
+            draw_rectange(WHITE, projectile.x, projectile.y, 25, 4, con, g);
             projectile.tick();
             if projectile.time_to_live == 0 {
                 dead_projectiles.push(index);
@@ -112,7 +123,10 @@ impl Game {
         if self.enemy_spawn_ticks > 0 {
             self.enemy_spawn_ticks -= 1;
         } else {
-            self.enemy_spawn_ticks = 15;
+            self.enemy_spawn_ticks = self.enemy_spawn_difficulty;
+            if self.enemy_spawn_difficulty > 3 {
+                self.enemy_spawn_difficulty -= 2; // slowly increase rate to enemy spawing
+            }
             let mut rng = rand::thread_rng();
             let mut random_x = 0;
             let mut speed_x = rng.gen_range(0.8..1.2);
@@ -121,7 +135,10 @@ impl Game {
                 speed_x = -rng.gen_range(0.8..1.2);
             }
 
-            self.enemies.push(enemy::Enemy::new(random_x as f64, 50.0 + rng.gen_range(0.0..600.0), speed_x, 50));
+            // memory leak prevention
+            if self.enemies.len() < 1024 {
+                self.enemies.push(enemy::Enemy::new(random_x as f64, 50.0 + rng.gen_range(0.0..600.0), speed_x, 50));
+            }            
         }
 
         // enemies
@@ -148,6 +165,8 @@ impl Game {
         let mut dead_enemies = HashSet::<usize>::new();
         let mut dead_projectiles = HashSet::<usize>::new();
 
+        let mut is_player_dead = false;
+
         for (index_enemy, enemy) in self.enemies.iter_mut().enumerate() {
             // collision enemy - projectile
             for (index_projectile, projectile) in self.player.projectiles.iter_mut().enumerate() {
@@ -159,10 +178,18 @@ impl Game {
             // collision enemy - player
             if enemy.x - enemy::WIDTH as f64 / 2.0 < self.player.x && enemy.x + enemy::WIDTH as f64 / 2.0 > self.player.x && enemy.y - enemy::HEIGHT as f64 / 2.0 < self.player.y && enemy.y + enemy::HEIGHT as f64 / 2.0 > self.player.y  {
                 // exit
-                print!("DEAD!");
-            }
+                is_player_dead = true;
+                print!("DEAD")
+            } 
         }
+        if is_player_dead {
+            result.push(1);
+        } else {
+            result.push(0);
+        }
+
         let mut dead_enemies_sorted: Vec<usize> = dead_enemies.into_iter().collect();
+        let enemy_destroyed = dead_enemies_sorted.len();
         dead_enemies_sorted.sort();
         dead_enemies_sorted.reverse();        
         for index in dead_enemies_sorted {
@@ -172,9 +199,13 @@ impl Game {
         dead_projectiles_sorted.sort();
         dead_projectiles_sorted.reverse();
         
+        result.push(enemy_destroyed as usize);
+
         for index in dead_projectiles_sorted {
             self.player.projectiles.remove(index);
         }
+        //TODO
+        result
     }
 
     fn restart_game(self) -> Game {
