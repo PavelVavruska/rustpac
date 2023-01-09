@@ -112,11 +112,11 @@ impl Game {
         }
 
         // enemies
-        if self.enemy_spawn_ticks > 0 {
+        if self.enemy_spawn_ticks > 10 {
             self.enemy_spawn_ticks -= 1;
         } else {
             self.enemy_spawn_ticks = self.enemy_spawn_difficulty;
-            if self.enemy_spawn_difficulty > 3 {
+            if self.enemy_spawn_difficulty > 20 {
                 self.enemy_spawn_difficulty -= 2; // slowly increase rate to enemy spawing
             }
             let mut rng = rand::thread_rng();
@@ -140,7 +140,7 @@ impl Game {
         for (index, enemy) in self.enemies.iter_mut().enumerate() {         
             
             // draw enemy
-            let enemy_trans = con.transform.trans(enemy.x, enemy.y);
+            let enemy_trans = con.transform.trans(enemy.x, enemy.y).scale(0.3, 0.3);
 
             if enemy.enemy_type == 1 {
                 piston_window::image(enemy_sprite_user_story, enemy_trans, g);    

@@ -1,7 +1,7 @@
 use crate::WINDOW_WIDTH;
 
-pub const WIDTH: usize = 150;
-pub const HEIGHT: usize = 150;
+pub const WIDTH: usize = 50;
+pub const HEIGHT: usize = 50;
 
 #[derive(Copy, Clone)]
 pub struct Enemy {

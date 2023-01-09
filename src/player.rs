@@ -63,8 +63,8 @@ impl Player {
             if self.is_facing_left {
                 starting_x = -(WIDTH as f64) / 2.0 + self.x;
             }
-            self.projectiles.push(Projectile::new(starting_x, self.y + HEIGHT as f64 / 2.0, speed, 50));
-            self.shooting_timer = 50;
+            self.projectiles.push(Projectile::new(starting_x, self.y + HEIGHT as f64 / 2.0, speed, 150));
+            self.shooting_timer = 25;
         }
         if self.shooting_timer > 0 {
             self.shooting_timer -= 1;
