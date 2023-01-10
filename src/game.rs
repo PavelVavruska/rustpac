@@ -6,6 +6,7 @@ use crate::player;
 use crate::drawing::draw_rectange;
 use crate::player::WIDTH;
 use crate::enemy;
+use crate::map;
 use piston_window::Transformed;
 use piston_window::color::WHITE;
 use piston_window::types::Color;
@@ -17,6 +18,7 @@ pub struct Game {
     pub frame_buffer_next_tick: [[bool; WINDOW_HEIGHT]; WINDOW_WIDTH],
     pub player: player::Player,
     pub enemies: Vec<enemy::Enemy>,
+    pub map_grounds: Vec<map::Ground>,
     pub enemy_spawn_difficulty: usize,
     pub enemy_spawn_ticks: usize,
 }
@@ -43,6 +45,7 @@ impl Game {
             50,            
             ),
             enemies: Vec::new(),
+            map_grounds: map::getLevel1(),
             enemy_spawn_ticks: 150,
             enemy_spawn_difficulty: 50,
         }
@@ -84,6 +87,13 @@ impl Game {
 
         let mut result = Vec::<usize>::new();
         // Iterate over the world
+
+
+        // map - ground
+        for ground in &self.map_grounds {
+            draw_rectange(WHITE, ground.x, ground.y, ground.width as i32, ground.height as i32, con, g);
+        }
+
 
         // player
         let mut player_trans = con.transform.trans(self.player.x, self.player.y);
