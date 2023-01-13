@@ -1,4 +1,4 @@
-use crate::WINDOW_WIDTH;
+use crate::{WINDOW_WIDTH, WINDOW_WIDTH_F64};
 use crate::player::WIDTH;
 
 #[derive(Copy, Clone, Debug)]
@@ -37,7 +37,7 @@ impl Projectile {
         if self.x > WINDOW_WIDTH as f64 {
             self.x = 0.0;            
         } else if self.x < 0.0 {
-            self.x = (WINDOW_WIDTH - WIDTH) as f64;            
+            self.x = WINDOW_WIDTH_F64 - WIDTH;
         }
     }
 }

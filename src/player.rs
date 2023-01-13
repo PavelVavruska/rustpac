@@ -1,9 +1,9 @@
-use crate::{WINDOW_WIDTH, WINDOW_HEIGHT, projectile::Projectile};
+use crate::{WINDOW_WIDTH, WINDOW_HEIGHT, projectile::Projectile, map};
 
 const MAX_VELOCITY_X:f64 = 1.0;
 const MAX_VELOCITY_Y:f64 = 1.0;
-pub const WIDTH:usize= 20*4;
-pub const HEIGHT:usize= 20*4;
+pub const WIDTH:f64= 75.0;
+pub const HEIGHT:f64= 150.0;
 
 
 pub struct Player {
@@ -51,7 +51,7 @@ impl Player {
             shooting_timer,
         }
     }
-    pub fn tick(&mut self) {
+    pub fn tick(&mut self, map: &Vec<map::Ground>) {
         if self.is_shooting && self.shooting_timer == 0 {
             let mut speed = 0.0;
             if self.is_facing_left {
@@ -70,27 +70,54 @@ impl Player {
             self.shooting_timer -= 1;
         }
         
+        let mut is_colliding_x = false;
+        let mut is_colliding_y = false;
 
         if self.is_moving_up {
             self.move_up();
+            is_colliding_y = self.is_colliding(map);
+            if is_colliding_y {
+                self.move_down();
+            }
         } else {
             // moving down is done by fake gravity
             self.move_down();
+            is_colliding_y = self.is_colliding(map);
+            if is_colliding_y {
+                self.move_up();
+            }
         }
 
         if self.is_turning_left {
             self.is_facing_left = true;
-            self.turn_left();
+            self.move_left();
+            is_colliding_x = self.is_colliding(map);
+            if is_colliding_x {
+                self.move_right();
+            }
         } else if self.is_turning_right {
             self.is_facing_left = false;
-            self.turn_right();
+            self.move_right();
+            is_colliding_x = self.is_colliding(map);
+            if is_colliding_x {
+                self.move_left();
+            }
         }
+        
         self.x += self.move_speed_left;
+        if self.is_colliding(map) {
+            self.x -= self.move_speed_left;
+            self.move_speed_left = 0.0;
+        }
         self.y += self.move_speed_up;
+        if self.is_colliding(map) {            
+            self.y -= self.move_speed_up;            
+            self.move_speed_up = 0.0;
+        }
 
         //collision y
-        if self.y > (WINDOW_HEIGHT - HEIGHT*2) as f64 {
-            self.y = (WINDOW_HEIGHT - HEIGHT*2) as f64;
+        if self.y > WINDOW_HEIGHT as f64 - HEIGHT*2.0 {
+            self.y = WINDOW_HEIGHT as f64 - HEIGHT*2.0;
             self.move_speed_up = 0.0;
             // friction on x
             self.move_speed_left /= 1.05;
@@ -109,7 +136,7 @@ impl Player {
             // friction on x
             //self.move_speed_up /= 1.05;
         } else if self.x < 0.0 {
-            self.x = (WINDOW_WIDTH - WIDTH) as f64;
+            self.x = WINDOW_WIDTH as f64 - WIDTH;
             /*self.x = 50.0;
             self.move_speed_left = 0.0;
             // friction on x
@@ -132,15 +159,28 @@ impl Player {
         }    
     }
 
-    pub fn turn_left(&mut self) {
+    pub fn move_left(&mut self) {
         if self.move_speed_left >= -MAX_VELOCITY_X {
             self.move_speed_left -= 0.01;
         }
     }
 
-    pub fn turn_right(&mut self) {
+    pub fn move_right(&mut self) {
         if self.move_speed_left <= MAX_VELOCITY_X {
             self.move_speed_left += 0.01;
         }
+    }
+
+    pub fn is_colliding(&self, map: &Vec<map::Ground>) -> bool {
+        let player_low_left_x = self.x + WIDTH;
+        let player_low_left_y = self.y + HEIGHT;
+        for map_object in map {
+            if player_low_left_x > map_object.x && player_low_left_x - WIDTH - map_object.width < map_object.x 
+            && player_low_left_y > map_object.y && player_low_left_y - HEIGHT - map_object.height < map_object.y {
+                print!("COLLISION");
+                return true;
+            }
+        }
+        false
     }
 }

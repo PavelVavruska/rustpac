@@ -18,6 +18,8 @@ const RED_COLOR: Color = [0.5, 0.0, 0.0, 1.0];
 // ZX Spectrum resolution 256×192
 const WINDOW_WIDTH: usize = 256*4;
 const WINDOW_HEIGHT: usize = 192*4;
+const WINDOW_WIDTH_F64: f64 = WINDOW_WIDTH as f64;
+const WINDOW_HEIGHT_F64: f64 = WINDOW_HEIGHT as f64;
 
 pub const TEXT_COLOR: Color = [1.0, 1.0, 1.0, 1.0];
 
@@ -112,7 +114,7 @@ fn main() {
             if let Some(piston_window::Button::Keyboard(key)) = event.release_args() {
                 game.key_released(key);
             }
-            game.player.tick();  // observe keypress all the time
+            game.player.tick(&game.map_grounds);  // observe keypress all the time
                    
             // Draw all of them
             window.draw_2d(&event, |c, g, device| {
