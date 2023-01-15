@@ -2,8 +2,8 @@ use crate::{WINDOW_WIDTH, WINDOW_HEIGHT, projectile::Projectile, map};
 
 const MAX_VELOCITY_X:f64 = 1.0;
 const MAX_VELOCITY_Y:f64 = 1.0;
-pub const WIDTH:f64= 75.0;
-pub const HEIGHT:f64= 150.0;
+pub const WIDTH:f64 = 76.0/2.0;
+pub const HEIGHT:f64 = 150.0/2.0;
 
 
 pub struct Player {
@@ -104,6 +104,7 @@ impl Player {
             }
         }
         
+        // collision 
         self.x += self.move_speed_left;
         if self.is_colliding(map) {
             self.x -= self.move_speed_left;
@@ -172,15 +173,87 @@ impl Player {
     }
 
     pub fn is_colliding(&self, map: &Vec<map::Ground>) -> bool {
-        let player_low_left_x = self.x + WIDTH;
-        let player_low_left_y = self.y + HEIGHT;
+        let player_x = self.x;
+        let player_y = self.y;
         for map_object in map {
-            if player_low_left_x > map_object.x && player_low_left_x - WIDTH - map_object.width < map_object.x 
-            && player_low_left_y > map_object.y && player_low_left_y - HEIGHT - map_object.height < map_object.y {
-                print!("COLLISION");
+            if player_x + WIDTH > map_object.x && player_x - map_object.width < map_object.x 
+            && player_y + HEIGHT > map_object.y && player_y - map_object.height < map_object.y {
                 return true;
             }
         }
         false
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use crate::map::Ground;
+    use super::Player;
+
+    #[test]
+    fn test_colision_x_before_map() {
+        let player = Player::new(0.0,
+            0.0, 
+            1.0,
+            0.0,
+            false,
+            false,
+            true,             
+            false,
+            false,
+            Vec::new(),
+            1);
+        
+        let mut map_item_list = Vec::new();
+        let ground1 = Ground::new(1.0 + super::WIDTH, 0.0, 2.0, 10.0);
+        map_item_list.push(ground1);
+        
+        assert_eq!(0.0, player.x);
+        assert_eq!(false, player.is_colliding(&map_item_list));
+    }
+
+    #[test]
+    fn test_colision_x_inside_map() {
+        let player = Player::new(2.0,
+            0.0, 
+            1.0,
+            0.0,
+            false,
+            false,
+            true,             
+            false,
+            false,
+            Vec::new(),
+            1);
+
+        let mut map_item_list = Vec::new();
+        let ground1 = Ground::new(1.0 + super::WIDTH, 0.0, 2.0, 10.0);
+        map_item_list.push(ground1);
+
+        assert_eq!(2.0, player.x);
+        assert_eq!(true, player.is_colliding(&map_item_list));
+    }
+
+    #[test]
+    fn test_colision_x_after_map() {        
+        let player = Player::new(super::WIDTH + 2.0,
+            0.0, 
+            1.0,
+            0.0,
+            false,
+            false,
+            true,             
+            false,
+            false,
+            Vec::new(),
+            1);
+
+        let mut map_item_list = Vec::new();
+        let ground1 = Ground::new(1.0 + super::WIDTH, 0.0, 2.0, 10.0);
+        map_item_list.push(ground1);
+        
+        assert_eq!(super::WIDTH + 2.0, player.x);
+        assert_eq!(true, player.is_colliding(&map_item_list));
     }
 }

@@ -96,7 +96,7 @@ impl Game {
 
 
         // player
-        let mut player_trans = con.transform.trans(self.player.x, self.player.y);
+        let mut player_trans = con.transform.trans(self.player.x, self.player.y).scale(0.5, 0.5);
         if self.player.is_facing_left {
             player_trans = player_trans.scale(-1.0, 1.0).trans(-(WIDTH as f64), 0.0);
         }
@@ -140,7 +140,7 @@ impl Game {
             }
 
             // memory leak prevention
-            if self.enemies.len() < 1024 {
+            if self.enemies.len() < 16 {
                 self.enemies.push(enemy::Enemy::new(random_x as f64, 50.0 + rng.gen_range(0.0..600.0), speed_x, 50, enemy_type));
             }            
         }
