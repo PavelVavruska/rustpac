@@ -4,12 +4,12 @@ use super::WINDOW_HEIGHT;
 use super::WINDOW_WIDTH;
 use crate::player;
 use crate::drawing::draw_rectange;
+use crate::player::Movement;
 use crate::player::WIDTH;
 use crate::enemy;
 use crate::map;
 use piston_window::Transformed;
 use piston_window::color::WHITE;
-use piston_window::types::Color;
 use rand::Rng;
 
 pub struct Game {
@@ -34,30 +34,31 @@ impl Game {
             player: player::Player::new(
             600.0,
             500.0,
+            Movement::new(
             0.0,
             10.0,
             false,
             false,
             false,
-            false,
+            false),
             false,
             Vec::new(),
             50,            
             ),
             enemies: Vec::new(),
-            map_grounds: map::getLevel1(),
+            map_grounds: map::get_level_first(),
             enemy_spawn_ticks: 150,
             enemy_spawn_difficulty: 50,
         }
     }
     pub fn key_pressed(&mut self, key: piston_window::Key) {
         match key {
-            piston_window::Key::Up => self.player.is_moving_up = true,
-            piston_window::Key::W => self.player.is_moving_up = true,
-            piston_window::Key::Left => self.player.is_turning_left = true,
-            piston_window::Key::A => self.player.is_turning_left = true,
-            piston_window::Key::Right => self.player.is_turning_right = true,
-            piston_window::Key::D => self.player.is_turning_right = true,
+            piston_window::Key::Up => self.player.movement.is_moving_up = true,
+            piston_window::Key::W => self.player.movement.is_moving_up = true,
+            piston_window::Key::Left => self.player.movement.is_turning_left = true,
+            piston_window::Key::A => self.player.movement.is_turning_left = true,
+            piston_window::Key::Right => self.player.movement.is_turning_right = true,
+            piston_window::Key::D => self.player.movement.is_turning_right = true,
             piston_window::Key::RCtrl => self.player.is_shooting = true,
             piston_window::Key::LCtrl => self.player.is_shooting = true,
             _ => {}
@@ -65,12 +66,12 @@ impl Game {
     }
     pub fn key_released(&mut self, key: piston_window::Key) {
         match key {
-            piston_window::Key::Up => self.player.is_moving_up = false,
-            piston_window::Key::W => self.player.is_moving_up = false,
-            piston_window::Key::Left => self.player.is_turning_left = false,
-            piston_window::Key::A => self.player.is_turning_left = false,
-            piston_window::Key::Right => self.player.is_turning_right = false,
-            piston_window::Key::D => self.player.is_turning_right = false,
+            piston_window::Key::Up => self.player.movement.is_moving_up = false,
+            piston_window::Key::W => self.player.movement.is_moving_up = false,
+            piston_window::Key::Left => self.player.movement.is_turning_left = false,
+            piston_window::Key::A => self.player.movement.is_turning_left = false,
+            piston_window::Key::Right => self.player.movement.is_turning_right = false,
+            piston_window::Key::D => self.player.movement.is_turning_right = false,
             piston_window::Key::RCtrl => self.player.is_shooting = false,
             piston_window::Key::LCtrl => self.player.is_shooting = false,
             _ => {}
@@ -97,10 +98,10 @@ impl Game {
 
         // player
         let mut player_trans = con.transform.trans(self.player.x, self.player.y).scale(0.5, 0.5);
-        if self.player.is_facing_left {
-            player_trans = player_trans.scale(-1.0, 1.0).trans(-(WIDTH as f64), 0.0);
+        if self.player.movement.is_facing_left {
+            player_trans = player_trans.scale(-1.0, 1.0).trans(-WIDTH, 0.0);
         }
-        if self.player.is_moving_up {            
+        if self.player.movement.is_moving_up {            
             piston_window::image(player_sprite_thrust, player_trans, g);  
         } else {
             piston_window::image(player_sprite, player_trans, g);   
@@ -115,10 +116,10 @@ impl Game {
                 dead_projectiles.push(index);
             }            
         }
-
-        for index in dead_projectiles {
-            self.player.projectiles.remove(index);
-            break; // only one projectile can die by natural death in one tick
+        
+        if let Some(projectile) = dead_projectiles.pop() {
+            // only one projectile can die by natural death in one tick
+            self.player.projectiles.remove(projectile);
         }
 
         // enemies
@@ -164,10 +165,9 @@ impl Game {
                 dead_enemies.push(index);
             }            
         }   
-
-        for index in dead_enemies {
-            self.enemies.remove(index);
-            break; // only one enemy can die by natural death in one tick
+        if let Some(dead_enemy) = dead_enemies.pop() {
+            // only one enemy can die by natural death in one tick
+            self.enemies.remove(dead_enemy);
         }
 
         // collision
@@ -208,7 +208,7 @@ impl Game {
         dead_projectiles_sorted.sort();
         dead_projectiles_sorted.reverse();
         
-        result.push(enemy_destroyed as usize);
+        result.push(enemy_destroyed);
 
         for index in dead_projectiles_sorted {
             self.player.projectiles.remove(index);

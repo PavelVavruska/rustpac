@@ -19,7 +19,7 @@ const RED_COLOR: Color = [0.5, 0.0, 0.0, 1.0];
 const WINDOW_WIDTH: usize = 256*4;
 const WINDOW_HEIGHT: usize = 192*4;
 const WINDOW_WIDTH_F64: f64 = WINDOW_WIDTH as f64;
-const WINDOW_HEIGHT_F64: f64 = WINDOW_HEIGHT as f64;
+// const WINDOW_HEIGHT_F64: f64 = WINDOW_HEIGHT as f64;
 
 pub const TEXT_COLOR: Color = [1.0, 1.0, 1.0, 1.0];
 
@@ -122,7 +122,7 @@ fn main() {
                 
                 let result = game.compute_one_tick(&c, g, 
                     &player_sprite, &player_sprite_thrust, &enemy_sprite_user_story, &enemy_sprite_bug);
-                if *result.get(0).unwrap() == 1 as usize {
+                if result.first() == Some(&1) {
                     is_player_dead = true;
                 }
                 game_score += result.get(1).unwrap();
@@ -131,7 +131,7 @@ fn main() {
                 let transform = c.transform.trans(10.0, 50.0);
     
                 text::Text::new_color([0.1, 0.7, 0.3, 1.0], 32).draw(
-                    format!("Completed tasks: {}", game_score).as_str(),
+                    format!("Completed tasks: {game_score}").as_str(),
                 &mut glyphs,
                 &c.draw_state,
                 transform, g
@@ -158,7 +158,7 @@ fn main() {
                 let transform = c.transform.trans(10.0, 450.0);
         
                 text::Text::new_color([1.0, 1.0, 1.0, 0.75], 100).draw(
-                    format!("Your score: {}", game_score).as_str(),
+                    format!("Your score: {game_score}").as_str(),
                 &mut glyphs,
                 &c.draw_state,
                 transform, g

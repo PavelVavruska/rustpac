@@ -24,16 +24,13 @@ impl Ground {
             height,
         }
     }
-    pub fn tick(&mut self) {
-        // not going to move
-    }
 }
 
-pub fn getLevel1() -> Vec<Ground> {
+pub fn get_level_first() -> Vec<Ground> {
     let mut map_item_list = Vec::new();
     let ground1 = Ground::new(WINDOW_WIDTH as f64 / 4.0, WINDOW_HEIGHT as f64 / 2.0,200.0,30.0);
     let ground2 = Ground::new(WINDOW_WIDTH as f64 / 2.0, WINDOW_HEIGHT as f64 / 2.3,200.0,30.0);
     map_item_list.push(ground1);
     map_item_list.push(ground2);
-    return map_item_list
+    map_item_list
 }
