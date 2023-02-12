@@ -7,7 +7,6 @@
 12.02.2023 - Map, gamebalace, smaller models
 
 29.09.2022 version - Player, enemies, collision, score counting, end-screen
-<img alt="Description" src="./rustpac_20220929.png">
 
 
 ## How To Build It ?
